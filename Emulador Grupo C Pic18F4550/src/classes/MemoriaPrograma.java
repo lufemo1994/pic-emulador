@@ -48,21 +48,25 @@ public class MemoriaPrograma {
 		}
 	}
 	
-	public short lerInstrucao(int pos) throws Error
+	public byte[] lerInstrucao(int pos) throws Error
 	{
 		if(pos >= 0 && pos < 2097152)
 		{
 			if(pos >= 0 && pos <= 32768)
 			{
-				int x=0;
+				/*int x=0;
 				int temp = this.dadosDaMemoria[pos];
 				x = temp << 8;
 				temp = x | (0xFF&this.dadosDaMemoria[pos+1]);
-				return (short)temp;
+				return (short)temp;*/
+				byte[] instrucao = new byte[2];
+				instrucao[0] = this.dadosDaMemoria[pos]; // OpCode (esquerda)
+				instrucao[1] = this.dadosDaMemoria[pos+1]; // Arg (direita)
+				return instrucao;
 			}
 			else
 			{
-				return 0;
+				return new byte[]{0};
 			}
 		}
 		else

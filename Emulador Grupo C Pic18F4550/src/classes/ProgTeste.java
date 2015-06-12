@@ -18,10 +18,13 @@ public class ProgTeste {
 		//System.out.println(String.format(e"Bytezinho: %x", bytezinho));
 		try {
 			mep.escreverInstrucao(bytezinho, 0);
-			System.out.println(String.format("%x",  mep.lerInstrucao(0)));
+			byte[] instrucao = mep.lerInstrucao(0);
+			System.out.println(String.format("%x | %x",  instrucao[0], instrucao[1]));
 		} catch (Exception e) {
 			// TODO: handle exception
+			System.out.println(e);
 		}
+		
 		
 	}
 
