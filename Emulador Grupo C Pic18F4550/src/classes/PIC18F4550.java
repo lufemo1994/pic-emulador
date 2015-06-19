@@ -30,7 +30,7 @@ public class PIC18F4550 {
 	}
 	
 	private void decodificar()
-	{ // identifica op code e os argumentos, pra cada opcode, uma ação diferente
+	{ // Identifica op code e os argumentos, pra cada opcode, uma ação diferente
 		
 		switch(this.insAtual[0])
 		{
@@ -53,6 +53,7 @@ public class PIC18F4550 {
 		this.pc += 2;
 	}
 	
+	@Override
 	public String toString()
 	{
 		return "W: "+this.w+"; PC: "+this.pc;
