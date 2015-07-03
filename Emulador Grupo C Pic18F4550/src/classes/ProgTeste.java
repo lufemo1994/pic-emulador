@@ -32,7 +32,7 @@ public class ProgTeste {
 			pic.getMemProg().escreverInstrucao((short)0b0000111000000011, 6);
 			
 			// GOTO 110 = 01101110
-			pic.getMemProg().escreverInstrucao((short)0b1110111101101110, 8);
+			pic.getMemProg().escreverInstrucao((short)0b1110111100000000, 8);
 			pic.getMemProg().escreverInstrucao((short)0b1111000000000000, 10);
 			
 			// MOVLW 2
@@ -44,7 +44,7 @@ public class ProgTeste {
 			// MOVLW 94
 			pic.getMemProg().escreverInstrucao((short)0b0000111001011110, 110);
 			
-			for(int i = 0; i<7;i++)
+			for(;;)
 			{
 				pic.executarCicloDeMaq();
 				System.out.println(pic);

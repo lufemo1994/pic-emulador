@@ -12,7 +12,6 @@ public class EstadoProcessador {
 		this.pc = pc;
 	}
 	
-	
 	public EstadoProcessador(int pc, byte w, byte[] insAtual, byte bsr) {
 		this.pc = pc;
 		this.w = w;
