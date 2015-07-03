@@ -4,10 +4,24 @@ public class EstadoProcessador {
 	// int pc byte w byte status byte bsr
 	private int pc;
 	private byte w;
-	private byte status;
+	private byte[] insAtual;
 	private byte bsr;
 	
+	public EstadoProcessador(int pc)
+	{
+		this.pc = pc;
+	}
 	
+	
+	public EstadoProcessador(int pc, byte w, byte[] insAtual, byte bsr) {
+		this.pc = pc;
+		this.w = w;
+		this.insAtual = insAtual;
+		this.bsr = bsr;
+	}
+
+
+
 	public int getPc() {
 		return pc;
 	}
@@ -20,11 +34,11 @@ public class EstadoProcessador {
 	public void setW(byte w) {
 		this.w = w;
 	}
-	public byte getStatus() {
-		return status;
+	public byte[] getInsAtual() {
+		return insAtual;
 	}
-	public void setStatus(byte status) {
-		this.status = status;
+	public void setInsAtual(byte[] insAtual) {
+		this.insAtual = insAtual;
 	}
 	public byte getBsr() {
 		return bsr;

@@ -2,9 +2,11 @@ package classes;
 
 import java.util.Stack;
 
+import javafx.geometry.Pos;
+
 
 public class PIC18F4550 {
-	private byte w;
+	private byte w; // Registrador
 	private int pc = 0;
 	private byte[] insAtual; // (hexa) [0] -> OpCode; [1] -> argumento
 	private MemoriaDados memDados;
@@ -42,7 +44,24 @@ public class PIC18F4550 {
 			case OpCodes.MOVWF_2:
 				//
 				executarMovwf();
-				break;	
+				break;
+			case OpCodes.CALL_1:
+			case OpCodes.CALL_2:
+				executarCall();
+				break;
+			case OpCodes.GOTO:
+				executarGoto();
+				break;
+			case OpCodes.RETURN_Pt1:
+				switch(this.insAtual[1])
+				{
+					case OpCodes.RETURN_Pt2_1:
+					case OpCodes.RETURN_Pt2_2:
+						executarReturn();
+						break;
+				}
+				break;
+			
 		}
 		
 		
@@ -50,7 +69,7 @@ public class PIC18F4550 {
 	}
 	
 	private void executarMovwf()
-	{ // BSR -> 0xFE0H
+	{
 		byte teste = (byte) (insAtual[0] & 0b00000001); 
 		byte nsn;
 		byte k = insAtual[1];
@@ -60,18 +79,11 @@ public class PIC18F4550 {
 		
 		if(teste == 0b00000001) // If ‘a’ is ‘1’, the BSR is used to select the GPR bank (default). 
 		{ // Difícil: endereço de 12 bits
-			System.out.println("A = 1");
 			// BSR+kkkkkkkk
 			nsn = memDados.lerNaMemoria(OpCodes.BSR);
-			//System.out.println("Valor em HEX: "+temp.shortValue());
-			//System.out.println("Valor em INT: "+temp.intValue());
-			//System.out.println("Move o valor de W("+this.w+") para o endereço ");
 		}
 		else // If ‘a’ is ‘0’, the Access Bank is selected
 		{  // Fácil: endereço 8 bits
-			System.out.println("A == 0");
-			
-			//if(k >= 0 && k <= 59h) -> NSN = 0000
 			if(insAtual[1] >= 0 && insAtual[1] <= 0x59)
 			{
 				nsn = 0x00;
@@ -80,17 +92,10 @@ public class PIC18F4550 {
 			{
 				nsn = (byte)0b00001111;
 			}
-		
-			//else if(K >= 60h <= FFh) -> NSN 1111
 		}
 		
 		this.w = (byte)0b00001001;
-		//System.out.println("NSN: "+nsn);
 		Short endereco = new Short((short) ((nsn << 8) + k));
-		//memDados.escreverNaMemoria(endereco.intValue(), this.w);
-		//System.out.println("Endereço: "+endereco.intValue());
-		//System.out.println("Valor de W: "+this.w);
-		//System.out.println(memDados.lerNaMemoria(endereco.intValue()));
 	}
 	
 	private void executarMovlw()
@@ -101,25 +106,62 @@ public class PIC18F4550 {
 	private void executarCall() throws Error
 	{
 		if(pilha.size() <= 31)
-		{
-			EstadoProcessador estadoAtual = new EstadoProcessador();
-			estadoAtual.setPc(this.pc);
-			estadoAtual.setW(this.w);
-			estadoAtual.setStatus((byte)0);
-			estadoAtual.setBsr(memDados.lerNaMemoria(OpCodes.BSR));
-			pilha.push(estadoAtual);
+		{ // 1 -> vc manda só o pc; 0 -> vc manda tudo	
+			byte[] instrucaoParte2 = memProg.lerInstrucao(pc+2);
+			int endereco = this.insAtual[1];
+			int part2Desloc = (0xff & (int)instrucaoParte2[1]);
+			endereco = (part2Desloc << 8) | endereco;
+			endereco = ((instrucaoParte2[0] & 0b00001111) << 16)+ endereco;
+			if((insAtual[0] & 0b00000001) == (byte)0b00000001)
+			{
+				pilha.push(new EstadoProcessador(this.pc+2));
+			}
+			else
+			{
+				pilha.push(new EstadoProcessador(this.pc+2, this.w, this.insAtual, memDados.lerNaMemoria(OpCodes.BSR)));
+			}
 			
-			
+					
+			this.pc = endereco-2;
 		}
 		else
 		{
 			throw new Error("Pilha está cheia!");
 		}
+		
+		
+	}
+	
+	private void executarGoto()
+	{
+		byte[] instrucaoParte2 = memProg.lerInstrucao(pc+2);
+		int endereco = this.insAtual[1];
+		int part2Desloc = (0xff & (int)instrucaoParte2[1]);
+		endereco = (part2Desloc << 8) | endereco;
+		endereco = ((instrucaoParte2[0] & 0b00001111) << 16)+ endereco;
+		
+		this.pc = endereco-2;
 	}
 	
 	private void executarReturn()
-	{
-		
+	{  
+		// 0 ou 1
+		// 1 -> puxa só o pc
+		// 0 -> puxa tudo
+		int s = insAtual[1] & 0b00000001;
+		if(s == 1)
+		{
+			EstadoProcessador retorno = pilha.pop();
+			this.pc = retorno.getPc();
+		}
+		else
+		{ // 0
+			EstadoProcessador retorno = pilha.pop();
+			this.pc = retorno.getPc();
+			this.w = retorno.getW();
+			this.insAtual = retorno.getInsAtual();
+			memDados.escreverNaMemoria(OpCodes.BSR, retorno.getBsr());
+		}
 	}
 	
 	private void atualizar() // Incrementa o PC
@@ -130,7 +172,7 @@ public class PIC18F4550 {
 	@Override
 	public String toString()
 	{
-		return "W: "+this.w+"; PC: "+this.pc;
+		return "W: "+this.w+"; PC: "+(this.pc-2);
 	}
 
 	public byte getW() {
